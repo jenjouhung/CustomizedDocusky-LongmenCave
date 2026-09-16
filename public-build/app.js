@@ -8,11 +8,11 @@ const $=s=>document.querySelector(s),el=(tag,text,cls)=>{const n=document.create
 let manifest,data,state,field,local=null,renderID=0;
 let drafts={},facetSort={};
 let facetType='Metadata', lastField={};
-const typeControl=el('select');typeControl.id='facet-type';typeControl.setAttribute('aria-label','後分類類型');
-for(const name of ['Metadata','Tag']){const option=el('option',name);option.value=name;typeControl.append(option)}
-document.querySelector('aside').prepend(typeControl);
+const typeButtons=[...document.querySelectorAll('#facet-type [role="tab"]')];
+function showFacetType(){for(const control of typeButtons){const selected=control.dataset.type===facetType;control.setAttribute('aria-selected',String(selected));control.tabIndex=selected?0:-1}}
 function chooseFields(){const options=fields(data.config,facetType);field=options.some(f=>f.id===lastField[facetType])?lastField[facetType]:(options[0]?.id||'');$('#field').replaceChildren(...options.map(f=>{const o=el('option',f.label);o.value=f.id;return o}));$('#field').value=field;$('#field').disabled=!options.length;}
-typeControl.onchange=()=>{lastField[facetType]=field;facetType=typeControl.value;chooseFields();facets()};
+function selectFacetType(next){if(next===facetType)return;lastField[facetType]=field;facetType=next;showFacetType();chooseFields();facets()}
+for(const control of typeButtons){control.onclick=()=>selectFacetType(control.dataset.type);control.onkeydown=e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const offset=e.key==='ArrowRight'?1:-1,index=typeButtons.indexOf(control),next=typeButtons[(index+offset+typeButtons.length)%typeButtons.length];selectFacetType(next.dataset.type);next.focus()}}
 $('#result-count').append($('#count'));
 function pending(){const draft=drafts[field]||state.conditions[field]||[], applied=state.conditions[field]||[];$('#facet-actions').hidden=draft.length===applied.length&&draft.every(v=>applied.includes(v))}
 function message(text=''){$('#message').textContent=text}
@@ -22,7 +22,7 @@ const legend=el('div',undefined,'text-legend');legend.setAttribute('aria-label',
 for(const [name,cls] of [['一般 Tag','tag-text'],['已套用 Tag','tag-text tag-active'],['搜尋命中','search-hit']])legend.append(el('span',name,cls));
 $('.result-toolbar').after(legend);
 function openDialog(title){$('#dialog-body').replaceChildren(el('h2',title));if(!$('#dialog').open)$('#dialog').showModal();return $('#dialog-body')}
-async function selectVersion(id){const loaded=await loadVersion(id);data=loaded;state=new State(data.index,data.facets,data.meta.count);drafts={};facetSort={};lastField={};facetType='Metadata';typeControl.value=facetType;chooseFields();$('#title').textContent=data.config.title;document.title=data.config.title;$('#version-label').textContent=`${manifest.current===id?'現行版本':'瀏覽封存版本'} ${id} · ${data.meta.count} 筆`;
+async function selectVersion(id){const loaded=await loadVersion(id);data=loaded;state=new State(data.index,data.facets,data.meta.count);drafts={};facetSort={};lastField={};facetType='Metadata';showFacetType();chooseFields();$('#title').textContent=data.config.title;document.title=data.config.title;$('#version-label').textContent=`${manifest.current===id?'現行版本':'瀏覽封存版本'} ${id} · ${data.meta.count} 筆`;
  $('#query').value='';message();await render();}
 function facets(){
  const list=$('#facet-values');list.replaceChildren();
@@ -35,12 +35,12 @@ function facets(){
   const lab=el('label');lab.append(check,document.createTextNode(' '+label(item.value)));
   row.append(lab,button(String(item.count),()=>{delete drafts[field];state.apply(field,[item.value]);return render()}));list.append(row);
  }
- if(!list.childNodes.length)list.append(el('p',facetType==='Tag'&&!Object.keys(data.facets).some(f=>f.startsWith('tag:'))?'此版本無 Tag 後分類':'此條件下沒有可用分類值'));
+ if(!list.childNodes.length)list.append(el('p',facetType==='Tag'&&!Object.keys(data.facets).some(f=>f.startsWith('tag:'))?'此版本無內文標籤後分類':'此條件下沒有可用分類值'));
  pending();
 }
 async function render(){const generation=++renderID;message();const ids=sortIDs(state.results(),data.rows,data.config),total=ids.length;state.page=Math.min(state.page,Math.max(1,Math.ceil(total/data.config.pageSize)));$('#count').textContent=`${total} 筆`;$('form label').textContent=state.queries.length||Object.keys(state.conditions).length?'再查詢':'全文查詢';const chips=$('#conditions');chips.replaceChildren();
  state.queries.forEach((q,i)=>chips.append(el('span',`Q${i+1}：${q.source}（該輪 ${q.count} 筆）`,'chip')));
- for(const [f,values] of Object.entries(state.conditions)){const name=fieldLabel(data.config,f);const b=button(values.map(v=>`{${name}} = ${label(v)}`).join(' OR ')+' ×',()=>{delete drafts[f];state.apply(f,[]);return render()});b.className='chip';chips.append(b)}facets();
+ for(const [f,values] of Object.entries(state.conditions)){const name=fieldLabel(data.config,f),source=f.startsWith('tag:')?'內文標籤':'後設資料';const b=button(`${source}：`+values.map(v=>`{${name}} = ${label(v)}`).join(' OR ')+' ×',()=>{delete drafts[f];state.apply(f,[]);return render()});b.className='chip';chips.append(b)}facets();
  const container=$('#records');container.replaceChildren(el('p','讀取全文…'));const page=ids.slice((state.page-1)*data.config.pageSize,state.page*data.config.pageSize);const rows=await Promise.all(page.map(async n=>{const [raw,parsed]=await Promise.all([data.record(n),data.text(n)]);return {raw,parsed}}));if(generation!==renderID)return;container.replaceChildren();
 rows.forEach(({raw:r,parsed})=>{const article=el('article',undefined,'record');article.append(el('h2',String(r[data.config.titleField]??'')));const meta=el('div',undefined,'metadata');for(const f of data.config.display.filter(f=>![data.config.text,data.config.titleField].includes(f)))meta.append(el('span',`${data.config.headers[f].split('(')[0]}：${r[f]??'（空白）'}`));article.append(meta,highlight(parsed),button(`查看全部 ${data.config.headers.length} 個欄位`,()=>{const body=openDialog(String(r[data.config.titleField]));body.append(el('p',`${data.meta.id} · ${r[data.config.key]}`));data.config.headers.forEach((name,f)=>{const row=el('div',undefined,'detail-row');row.append(el('strong',name),f===data.config.text?highlight(parsed):document.createTextNode(r[f]===null?'（空白）':String(r[f])));if(f===data.config.text){const raw=el('details');raw.append(el('summary','原始標記全文'),el('p',String(r[f]??''),'text'));row.append(raw)}body.append(row)})}));container.append(article)});
  if(!total){const empty=el('div',undefined,'empty');empty.append(el('h2','目前條件沒有符合資料'),el('p','已保留查詢條件。可移除後分類條件或重新查詢。'),button('重新查詢',reset));container.append(empty)}
