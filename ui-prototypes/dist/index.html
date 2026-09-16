@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>龍門石窟題記分析平台－介面雛形</title>
+  <meta name="description" content="三種後分類分析平台介面雛形比較">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2328383d'/%3E%3Cpath d='M8 9h16v3H8zm0 6h12v3H8zm0 6h16v3H8z' fill='%23d6a649'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .facet-drawer.closed{display:none}.history-card details{margin:14px 0}.history-card details label{display:block;font-size:.78rem;margin:8px 0 4px}.history-card details input{width:100%;padding:8px;border:1px solid #aab5c1}.history-card details button{width:100%;margin-top:6px;padding:7px;background:#29466b;color:#fff;border:0}
+    .a-query-area{padding:16px 4.5vw 12px;background:#fff}.a-query-row{display:grid;grid-template-columns:auto minmax(280px,1fr) auto auto;align-items:center;gap:12px}.a-query-row label{font:700 1.1rem Georgia,"Noto Serif TC",serif}.a-query-row textarea{height:44px;resize:none;border:1px solid #b9c3c0;border-radius:6px;padding:7px 14px;line-height:1.7;background:#fff}.a-query-row button{height:44px;padding:0 22px;font-size:.95rem}.a-query-row .clear-input{background:#f5f1e9}.a-query-area details{display:inline-block;margin:4px 0 0 88px;color:#697276;font-size:.8rem}.a-query-area details p{display:inline;margin-left:8px}.a-current{display:flex;align-items:center;gap:16px;margin:5px 0 0 88px;min-height:42px}.a-current>div:first-child{display:flex;align-items:baseline;gap:8px;min-width:max-content}.a-current .eyebrow{font-size:.7rem}.a-current .result-count{font-size:1.55rem}.a-current .condition-stack{margin:0}.a-current .condition-stack span{padding:3px 8px}.a-workarea{display:grid;grid-template-columns:310px minmax(0,1fr);gap:36px;margin:0 4.5vw;padding-top:20px;border-top:1px solid #7f9edb}.a-facets{background:#f4f1e9;padding:0 14px 24px;align-self:start}.a-facets h2{font:400 1.8rem Georgia,"Noto Serif TC",serif;margin:0 -14px;padding:0 14px 10px;background:#fff}.a-facets>label{display:block;font-weight:700;margin:10px 0 7px}.a-facets select{width:100%;padding:13px;border:1px solid #b8c1bd;border-radius:6px;background:#fff}.a-facets .facet-values{margin-top:14px}.a-facets .facet-values label{font-weight:700}.a-results{padding:0 0 50px}.a-results .record:first-child{padding-top:0}.a-results .zero-state{padding-top:40px}@media(max-width:900px){.a-query-row{grid-template-columns:1fr 1fr}.a-query-row label{grid-column:1/-1}.a-query-row textarea{grid-column:1/-1}.a-query-area details,.a-current{margin-left:0}.a-current{align-items:flex-start;flex-direction:column}.a-workarea{grid-template-columns:1fr}.a-facets{position:static}}
+    .a-facets>.primary,.a-facets>.reset{width:100%;margin-top:10px}
+  </style>
+</head>
+<body>
+  <main>
+    <section id="view-a" class="view concept-a">
+      <header class="app-head dark">
+        <div><small>現行資料版本 v0003</small><h1>龍門石窟北魏紀年題記</h1></div>
+        <div class="head-actions"><button>版本管理</button><button>匯入修訂版</button></div>
+      </header>
+      <section class="a-query-area">
+        <div class="a-query-row">
+          <label for="query-a">再查詢</label>
+          <textarea id="query-a" rows="1">眾生</textarea>
+          <button class="primary run-query">執行查詢</button>
+          <button class="quiet clear-input">清除輸入</button>
+        </div>
+        <details><summary>查詢語法</summary><p>支援 AND、OR、NOT、括號、雙引號與 \ 跳脫。</p></details>
+        <div class="a-current">
+          <div><span class="eyebrow">目前結果</span><strong class="result-count">12 筆</strong></div>
+          <div class="condition-stack"><span>Q1：彌勒 <button>×</button></span><span>Q2：眾生 NOT 病 <button>×</button></span><span>{供養人身份} = 清信士 OR 宗室 <button>×</button></span></div>
+        </div>
+      </section>
+      <div class="a-workarea">
+        <aside class="a-facets">
+          <h2>後分類</h2>
+          <label>分類欄位</label><select><option>年號</option><option>西曆年</option><option>窟龕名</option><option>窟內位置</option><option>供養人身份</option><option>造像內容</option></select>
+          <div class="facet-values">
+            <label><input type="checkbox" checked> 清信士 <b>18</b></label>
+            <label><input type="checkbox" checked> 宗室 <b>12</b></label>
+            <label><input type="checkbox" checked> 邑義 <b>9</b></label>
+            <label><input type="checkbox"> 妻 <b>7</b></label>
+          </div>
+          <button class="primary apply-filter">確認過濾</button>
+          <button class="reset reset-all">重新查詢</button>
+        </aside>
+        <section class="a-results">
+          <div class="records"></div>
+          <div class="zero-state" hidden><span>0</span><h2>目前條件沒有符合資料</h2><p>條件已保留。可移除單一條件，或重新查詢回到全覽。</p><button class="reset-all">重新查詢</button></div>
+        </section>
+      </div>
+    </section>
+
+  </main>
+
+  <dialog id="record-dialog"><button class="dialog-close" aria-label="關閉">×</button><div id="dialog-content"></div></dialog>
+  <script src="app.js"></script>
+</body>
+</html>

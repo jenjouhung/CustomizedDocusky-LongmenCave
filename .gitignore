@@ -1,0 +1,21 @@
+.DS_Store
+~$*
+
+# 本機研究來源與版本資料
+metadataExample/
+workspace-data/
+backups/
+previous-release/
+
+# 本機封裝與暫存
+*.xlsx
+*.zip
+*.tmp
+__pycache__/
+*.py[cod]
+
+# 套件與測試暫存
+node_modules/
+playwright-report/
+test-results/
+
