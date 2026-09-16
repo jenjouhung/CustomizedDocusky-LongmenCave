@@ -1,6 +1,7 @@
 """Read first XLSX sheet, preserving raw values; no third party dependencies."""
 import zipfile, xml.etree.ElementTree as ET, re, posixpath
 from config import CONFIG
+from markup import parse_text
 NS={'m':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 def read_excel(path):
     if path.stat().st_size > 50*1024*1024: raise ValueError('Excel 超過 50 MB')
@@ -48,6 +49,10 @@ def read_excel(path):
         if key in seen: raise ValueError(f'第{n}列 唯一鍵重複：{key}')
         seen.add(key)
         if len(str(r[27]))>200000: raise ValueError(f'第{n}列 全文超過200000字元')
+        try:
+            parse_text(r[CONFIG['text']], {t['name'] for t in CONFIG['tagFacets']})
+        except ValueError as exc:
+            raise ValueError(f'{first.get("name")} 第{n}列 {expected[CONFIG["text"]]}：{exc}') from exc
         for i,v in enumerate(r):
             if v is None: warnings.append(f'第{n}列 {expected[i]}：空白值')
             if i in CONFIG['multi'] and v is not None:

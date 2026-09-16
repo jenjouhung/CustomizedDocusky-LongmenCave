@@ -3,6 +3,7 @@ import json, hashlib, shutil, tempfile, zipfile, datetime
 from pathlib import Path
 from config import CONFIG
 from importer import read_excel
+from markup import parse_text, PARSER_VERSION
 ROOT=Path(__file__).resolve().parents[1]
 DATA=ROOT/'workspace-data'
 def write(path,value):
@@ -19,7 +20,8 @@ def import_file(path):
     with tempfile.TemporaryDirectory(dir=DATA) as tmp:
         stage=Path(tmp); index={}; facets={}
         for n,r in enumerate(records):
-            for pos,ch in enumerate(str(r[CONFIG['text']])):
+            parsed=parse_text(r[CONFIG['text']], {t['name'] for t in CONFIG['tagFacets']})
+            for pos,ch in enumerate(parsed['text']):
                 index.setdefault(ch,{}).setdefault(str(n),[]).append(pos)
             for f in CONFIG['facets']:
                 v=r[f]; vals=set(str(v).strip().split(';')) if f in CONFIG['multi'] and v is not None else [v]
@@ -27,10 +29,14 @@ def import_file(path):
                 for x in vals:
                     if f in CONFIG['multi'] and x=='': continue
                     facets.setdefault(str(f),{}).setdefault(json.dumps(x,ensure_ascii=False),[]).append(n)
+            for name,term in {(t['name'],t['term']) for t in parsed['tags']}:
+                facets.setdefault('tag:'+name,{}).setdefault(json.dumps(term,ensure_ascii=False),[]).append(n)
             write(stage/'records'/f'{n}.json',r)
+            write(stage/'texts'/f'{n}.json',parsed)
         write(stage/'index.json',index); write(stage/'facets.json',facets)
         write(stage/'rows.json',[{str(i):r[i] for i in set(CONFIG['facets']+[0,CONFIG['sort']])} for r in records])
         meta={'id':version,'count':len(records),'created':now(),'source':path.name,'sha256':digest(path),'sheet':sheet,'headers':CONFIG['headers'],'warnings':warnings}
+        meta.update(schema=2, parserVersion=PARSER_VERSION, offsetUnit='unicode-code-point')
         write(stage/'version.json',meta); write(stage/'config.json',CONFIG)
         write(stage/'checksums.json',{str(p.relative_to(stage)):digest(p) for p in stage.rglob('*') if p.is_file()})
         stage.rename(DATA/version)

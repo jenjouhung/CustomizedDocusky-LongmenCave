@@ -2,27 +2,47 @@ import {json,loadVersion,compareVersions} from './core/data.js';
 import {State} from './core/state.js';
 import {counts,label,sortIDs,sortFacets} from './core/facets.js';
 import {positiveTerms} from './core/query.js';
+import {fields,fieldLabel} from './core/facet-fields.js';
+import {renderText} from './core/text-view.js';
 const $=s=>document.querySelector(s),el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n};
 let manifest,data,state,field,local=null,renderID=0;
 let drafts={},facetSort={};
+let facetType='Metadata', lastField={};
+const typeControl=el('select');typeControl.id='facet-type';typeControl.setAttribute('aria-label','後分類類型');
+for(const name of ['Metadata','Tag']){const option=el('option',name);option.value=name;typeControl.append(option)}
+document.querySelector('aside').prepend(typeControl);
+function chooseFields(){const options=fields(data.config,facetType);field=options.some(f=>f.id===lastField[facetType])?lastField[facetType]:(options[0]?.id||'');$('#field').replaceChildren(...options.map(f=>{const o=el('option',f.label);o.value=f.id;return o}));$('#field').value=field;$('#field').disabled=!options.length;}
+typeControl.onchange=()=>{lastField[facetType]=field;facetType=typeControl.value;chooseFields();facets()};
 $('#result-count').append($('#count'));
 function pending(){const draft=drafts[field]||state.conditions[field]||[], applied=state.conditions[field]||[];$('#facet-actions').hidden=draft.length===applied.length&&draft.every(v=>applied.includes(v))}
 function message(text=''){$('#message').textContent=text}
 function button(text,fn){const b=el('button',text);b.onclick=()=>Promise.resolve(fn()).catch(e=>message(e.message));return b}
-function highlight(text){const node=el('p',undefined,'text'),source=String(text??''),terms=[...new Set(state.queries.flatMap(q=>positiveTerms(q.ast)))];let ranges=[];
- for(const term of terms){let p=source.indexOf(term);while(p!==-1){ranges.push([p,p+term.length]);p=source.indexOf(term,p+1)}}
- ranges.sort((a,b)=>a[0]-b[0]);const merged=[];for(const r of ranges){const last=merged.at(-1);if(last&&r[0]<=last[1])last[1]=Math.max(last[1],r[1]);else merged.push([...r])}
- let start=0;for(const [a,b] of merged){node.append(document.createTextNode(source.slice(start,a)),el('mark',source.slice(a,b)));start=b}node.append(document.createTextNode(source.slice(start)));return node;
-}
+function highlight(parsed){return renderText(parsed,state.queries.flatMap(q=>positiveTerms(q.ast)),state.conditions)}
+const legend=el('div',undefined,'text-legend');legend.setAttribute('aria-label','全文標示圖例');
+for(const [name,cls] of [['一般 Tag','tag-text'],['已套用 Tag','tag-text tag-active'],['搜尋命中','search-hit']])legend.append(el('span',name,cls));
+$('.result-toolbar').after(legend);
 function openDialog(title){$('#dialog-body').replaceChildren(el('h2',title));if(!$('#dialog').open)$('#dialog').showModal();return $('#dialog-body')}
-async function selectVersion(id){const loaded=await loadVersion(id);data=loaded;state=new State(data.index,data.facets,data.meta.count);field=String(data.config.facets[0]);$('#title').textContent=data.config.title;document.title=data.config.title;$('#version-label').textContent=`${manifest.current===id?'現行版本':'瀏覽封存版本'} ${id} · ${data.meta.count} 筆`;
- $('#field').replaceChildren(...data.config.facets.map(f=>{const o=el('option',data.config.headers[f].split('(')[0]);o.value=f;return o}));$('#query').value='';message();await render();}
-function facets(){const list=$('#facet-values');list.replaceChildren();const applied=state.conditions[field]||[];const mode=facetSort[field]||'count-desc';$('#facet-sort').value=mode;let items=counts(state.base(),state.conditions,data.facets,field);if(applied.length)items=items.filter(x=>applied.includes(x.value));for(const item of sortFacets(items,mode)){const row=el('div',undefined,'facet'),check=el('input');check.type='checkbox';check.value=item.value;check.checked=(drafts[field]||applied).includes(item.value);check.onchange=()=>{drafts[field]=[...list.querySelectorAll('input:checked')].map(x=>x.value);pending()};const lab=el('label');lab.append(check,document.createTextNode(' '+label(item.value)));row.append(lab,button(String(item.count),()=>{drafts={};state.apply(field,[item.value]);return render()}));list.append(row)}if(!list.childNodes.length)list.append(el('p','此條件下沒有可用分類值'));pending();}
-async function render(){drafts={};const generation=++renderID;message();const ids=sortIDs(state.results(),data.rows,data.config),total=ids.length;state.page=Math.min(state.page,Math.max(1,Math.ceil(total/data.config.pageSize)));$('#count').textContent=`${total} 筆`;$('form label').textContent=state.queries.length||Object.keys(state.conditions).length?'再查詢':'全文查詢';const chips=$('#conditions');chips.replaceChildren();
+async function selectVersion(id){const loaded=await loadVersion(id);data=loaded;state=new State(data.index,data.facets,data.meta.count);drafts={};facetSort={};lastField={};facetType='Metadata';typeControl.value=facetType;chooseFields();$('#title').textContent=data.config.title;document.title=data.config.title;$('#version-label').textContent=`${manifest.current===id?'現行版本':'瀏覽封存版本'} ${id} · ${data.meta.count} 筆`;
+ $('#query').value='';message();await render();}
+function facets(){
+ const list=$('#facet-values');list.replaceChildren();
+ const applied=state.conditions[field]||[],mode=facetSort[field]||'count-desc';$('#facet-sort').value=mode;
+ let items=counts(state.base(),state.conditions,data.facets,field);
+ if(applied.length)items=items.filter(x=>applied.includes(x.value));
+ for(const item of sortFacets(items,mode)){
+  const row=el('div',undefined,'facet'),check=el('input');check.type='checkbox';check.value=item.value;check.checked=(drafts[field]||applied).includes(item.value);
+  check.onchange=()=>{const selected=new Set(drafts[field]||applied);if(check.checked)selected.add(item.value);else selected.delete(item.value);drafts[field]=[...selected];pending()};
+  const lab=el('label');lab.append(check,document.createTextNode(' '+label(item.value)));
+  row.append(lab,button(String(item.count),()=>{delete drafts[field];state.apply(field,[item.value]);return render()}));list.append(row);
+ }
+ if(!list.childNodes.length)list.append(el('p',facetType==='Tag'&&!Object.keys(data.facets).some(f=>f.startsWith('tag:'))?'此版本無 Tag 後分類':'此條件下沒有可用分類值'));
+ pending();
+}
+async function render(){const generation=++renderID;message();const ids=sortIDs(state.results(),data.rows,data.config),total=ids.length;state.page=Math.min(state.page,Math.max(1,Math.ceil(total/data.config.pageSize)));$('#count').textContent=`${total} 筆`;$('form label').textContent=state.queries.length||Object.keys(state.conditions).length?'再查詢':'全文查詢';const chips=$('#conditions');chips.replaceChildren();
  state.queries.forEach((q,i)=>chips.append(el('span',`Q${i+1}：${q.source}（該輪 ${q.count} 筆）`,'chip')));
- for(const [f,values] of Object.entries(state.conditions)){const name=data.config.headers[f].split('(')[0];const b=button(values.map(v=>`{${name}} = ${label(v)}`).join(' OR ')+' ×',()=>{state.apply(f,[]);return render()});b.className='chip';chips.append(b)}facets();
- const container=$('#records');container.replaceChildren(el('p','讀取全文…'));const page=ids.slice((state.page-1)*data.config.pageSize,state.page*data.config.pageSize);const rows=await Promise.all(page.map(n=>data.record(n)));if(generation!==renderID)return;container.replaceChildren();
- rows.forEach(r=>{const article=el('article',undefined,'record');article.append(el('h2',String(r[data.config.titleField]??'')));const meta=el('div',undefined,'metadata');for(const f of data.config.display.filter(f=>![data.config.text,data.config.titleField].includes(f)))meta.append(el('span',`${data.config.headers[f].split('(')[0]}：${r[f]??'（空白）'}`));article.append(meta,highlight(r[data.config.text]),button('查看全部 28 個欄位',()=>{const body=openDialog(String(r[data.config.titleField]));body.append(el('p',`${data.meta.id} · ${r[data.config.key]}`));data.config.headers.forEach((name,f)=>{const row=el('div',undefined,'detail-row');row.append(el('strong',name),f===data.config.text?highlight(r[f]):document.createTextNode(r[f]===null?'（空白）':String(r[f])));body.append(row)})}));container.append(article)});
+ for(const [f,values] of Object.entries(state.conditions)){const name=fieldLabel(data.config,f);const b=button(values.map(v=>`{${name}} = ${label(v)}`).join(' OR ')+' ×',()=>{delete drafts[f];state.apply(f,[]);return render()});b.className='chip';chips.append(b)}facets();
+ const container=$('#records');container.replaceChildren(el('p','讀取全文…'));const page=ids.slice((state.page-1)*data.config.pageSize,state.page*data.config.pageSize);const rows=await Promise.all(page.map(async n=>{const [raw,parsed]=await Promise.all([data.record(n),data.text(n)]);return {raw,parsed}}));if(generation!==renderID)return;container.replaceChildren();
+rows.forEach(({raw:r,parsed})=>{const article=el('article',undefined,'record');article.append(el('h2',String(r[data.config.titleField]??'')));const meta=el('div',undefined,'metadata');for(const f of data.config.display.filter(f=>![data.config.text,data.config.titleField].includes(f)))meta.append(el('span',`${data.config.headers[f].split('(')[0]}：${r[f]??'（空白）'}`));article.append(meta,highlight(parsed),button(`查看全部 ${data.config.headers.length} 個欄位`,()=>{const body=openDialog(String(r[data.config.titleField]));body.append(el('p',`${data.meta.id} · ${r[data.config.key]}`));data.config.headers.forEach((name,f)=>{const row=el('div',undefined,'detail-row');row.append(el('strong',name),f===data.config.text?highlight(parsed):document.createTextNode(r[f]===null?'（空白）':String(r[f])));if(f===data.config.text){const raw=el('details');raw.append(el('summary','原始標記全文'),el('p',String(r[f]??''),'text'));row.append(raw)}body.append(row)})}));container.append(article)});
  if(!total){const empty=el('div',undefined,'empty');empty.append(el('h2','目前條件沒有符合資料'),el('p','已保留查詢條件。可移除後分類條件或重新查詢。'),button('重新查詢',reset));container.append(empty)}
  const pages=Math.max(1,Math.ceil(total/data.config.pageSize)),nav=$('#pagination');nav.replaceChildren();const go=n=>{state.page=n;return render()};for(const [name,n,disabled] of [['第一頁',1,state.page===1],['上一頁',state.page-1,state.page===1]]){const b=button(name,()=>go(n));b.disabled=disabled;nav.append(b)}nav.append(el('span',`${state.page} / ${pages}`));for(let n=Math.max(1,state.page-1);n<=Math.min(pages,state.page+1);n++){const b=button(String(n),()=>go(n));b.className='page-number';if(n===state.page)b.setAttribute('aria-current','page');nav.append(b)}for(const [name,n,disabled] of [['下一頁',state.page+1,state.page===pages],['最後一頁',pages,state.page===pages]]){const b=button(name,()=>go(n));b.disabled=disabled;nav.append(b)}container.scrollTop=0;
 }
@@ -33,7 +53,7 @@ async function versions(){const body=openDialog('資料版本');for(const v of m
 $('#close-dialog').onclick=()=>$('#dialog').close();$('#query-form').onsubmit=async e=>{e.preventDefault();try{state.query($('#query').value);await render()}catch(err){message(err.message)}};$('#clear-input').onclick=()=>{$('#query').value=''};$('#reset').onclick=reset;$('#field').onchange=()=>{field=$('#field').value;facets()};$('#apply').onclick=()=>{state.apply(field,[...document.querySelectorAll('#facet-values input:checked')].map(x=>x.value));render()};$('#clear-facets').onclick=()=>{state.conditions={};state.page=1;render()};$('#versions').onclick=()=>versions().catch(e=>message(e.message));
 async function init(){manifest=await json('data/manifest.json');await selectVersion(manifest.current)}
 $('#facet-sort').onchange=()=>{facetSort[field]=$('#facet-sort').value;facets()};
-$('#apply').onclick=()=>{state.apply(field,drafts[field]||state.conditions[field]||[]);drafts={};render()};
+$('#apply').onclick=()=>{state.apply(field,drafts[field]||state.conditions[field]||[]);delete drafts[field];render()};
 $('#cancel-facets').onclick=()=>{delete drafts[field];facets()};
 $('#clear-facets').onclick=()=>{drafts={};state.conditions={};state.page=1;render()};
 $('#admin-menu').addEventListener('click',e=>{if(e.target.closest('button'))$('#admin').open=false});

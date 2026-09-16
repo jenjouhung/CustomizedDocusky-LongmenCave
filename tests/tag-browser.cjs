@@ -1,0 +1,58 @@
+// Run against a locally built public site: TAG_TEST_URL=http://127.0.0.1:4187
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert=require('node:assert/strict');
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});
+ try {
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(process.env.TAG_TEST_URL||'http://127.0.0.1:4187');
+ const ready=()=>page.locator('.record').first().waitFor();
+ await ready();assert.equal(await page.locator('#count').textContent(),'153 筆');
+ assert(!(await page.locator('#records').textContent()).includes('<PersonName'));
+ assert(await page.locator('#records .tag-text').count()>0);
+ assert.equal(await page.locator('#records .tag-active').count(),0);
+ await page.locator('#facet-type').selectOption('Tag');
+ assert.equal(await page.locator('#field option').first().textContent(),'標記人名');
+ await page.locator('#facet-values input').first().check();
+ await page.locator('#facet-type').selectOption('Metadata');
+ await page.locator('#facet-values input').first().check();
+ await page.locator('#facet-type').selectOption('Tag');
+ assert(await page.locator('#facet-values input').first().isChecked());
+ await page.locator('#apply').click();await ready();
+ assert((await page.locator('#conditions').textContent()).includes('Tag：標記人名'));
+ assert.equal(await page.locator('#facet-values input').count(),1);
+ assert(await page.locator('#records .tag-active').count()>0);
+ const activeWord=await page.locator('#records .tag-active').first().textContent();
+ await page.locator('#query').fill('"'+activeWord+'"');
+ await page.getByRole('button',{name:'執行查詢',exact:true}).click();await ready();
+ assert(await page.locator('#records .tag-active.search-hit').count()>0);
+ await page.locator('#facet-type').selectOption('Metadata');
+ assert(await page.locator('#facet-actions').isVisible());
+ await page.locator('#cancel-facets').click();
+ await page.locator('#reset').click();await ready();
+ await page.locator('#query').fill('滎陽太守孫道務');
+ await page.getByRole('button',{name:'執行查詢',exact:true}).click();await ready();
+ assert((await page.locator('.record').first().locator('mark').allTextContents()).join('').includes('滎陽太守孫道務'));
+ assert.equal(await page.locator('#records .tag-active').count(),0);
+ await page.locator('.record button').first().click();
+ assert.equal(await page.locator('.detail-row').count(),28);
+ assert(await page.locator('#dialog .tag-text').count()>0);
+ await page.getByText('原始標記全文',{exact:true}).click();
+ assert((await page.locator('#dialog details p').textContent()).includes('<PersonName'));
+ assert.equal(await page.locator('#dialog details .tag-text').count(),0);
+ await page.locator('#close-dialog').click();
+ await page.locator('#reset').click();await ready();
+ await page.locator('#query').fill('hvd_110345');
+ await page.getByRole('button',{name:'執行查詢',exact:true}).click();
+ await page.locator('.empty').waitFor();assert.equal(await page.locator('#count').textContent(),'0 筆');
+ await page.locator('#admin summary').click();await page.locator('#versions').click();
+ await page.locator('.version-row').filter({hasText:'v0001'}).getByRole('button',{name:'瀏覽',exact:true}).click();await ready();
+ assert.equal(await page.locator('#count').textContent(),'153 筆');
+ await page.locator('#facet-type').selectOption('Tag');
+ assert.equal(await page.locator('#facet-values').textContent(),'此版本無 Tag 後分類');
+ await page.setViewportSize({width:390,height:844});
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ assert.deepEqual(errors,[]);console.log('Tag browser flows passed');
+ } finally {await browser.close()}
+})().catch(e=>{console.error(e);process.exitCode=1});

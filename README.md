@@ -19,10 +19,14 @@ macOS 安裝 Python 3.10 以上後，雙擊「啟動平台.command」，以 Chro
 
 ## 模組導航
 
+全文支援行內 Tag：左侧可切換 Metadata／Tag，Tag 依 term 的不重複文件數分類。搜尋與高亮只使用正文，完整資料內可展開「原始標記全文」。Tag 顯示名稱設定於 `tools/config.py` 的 `tagFacets`，對應 `Data_SPEC.md` 5.3；資料版本保存設定快照。解析與資料包介面見 `tools/MARKUP.md`。
+
 | 修改內容 | 入口 | 測試 |
 |---|---|---|
 | 資料欄位與用途 | tools/config.py | tests/test_packages.py |
 | Excel解析驗證 | tools/importer.py | tests/test_packages.py |
+| 全文Tag解析及分類設定 | tools/markup.py、tools/config.py | tests/test_markup.py |
+| Metadata／Tag類別識別與文案 | web/core/facet-fields.js | tests/tag.test.js |
 | 版本/備份/靜態建置 | tools/packages.py | tests/test_packages.py |
 | 全文語法與索引 | web/core/query.js | tests/core.test.js |
 | 後分類與排序 | web/core/facets.js | tests/core.test.js |
@@ -32,6 +36,32 @@ macOS 安裝 Python 3.10 以上後，雙擊「啟動平台.command」，以 Chro
 | 本機管理及啟停 | tools/manage.py | 本機驗證 |
 
 執行測試：`npm test`、`python3 -m unittest discover -s tests -p 'test_*.py'`。
+
+## Excel 全文批次標記工具
+
+`tools/text_tagger.py` 依標記清單活頁簿的工作表順序與資料列順序，標記目標 Excel 的指定文字欄位。第一次使用時先安裝 Excel 函式庫：
+
+```bash
+python3 -m pip install -r requirements-tagger.txt
+```
+
+再修改程式開頭的 `TARGET_FILE`、`TARGET_SHEET`、`TARGET_COLUMN`、`TAG_LIST_FILE` 與 `OUTPUT_FILE`，然後執行：
+
+```bash
+python3 tools/text_tagger.py
+```
+
+也可用命令列暫時覆寫設定，例如：
+
+```bash
+python3 tools/text_tagger.py \
+  --target-file metadataExample/來源.xlsx \
+  --target-column 題記錄文 \
+  --tag-list-file metadataExample/標記清單.xlsx \
+  --output-file outputs/標記結果.xlsx
+```
+
+標記清單每個工作表都以第一列為標題，支援 `tagName`、`tagVal`、`@term`、`@RefId`；欄名不區分大小寫。`tagName` 與 `tagVal` 必填，另兩欄選填。程式需要 Python 3.10 以上及 `openpyxl`，輸出一定另存新檔，不會覆寫來源 Excel。
 
 ## 實作選擇
 

@@ -5,7 +5,7 @@ import packages
 class PackagesTest(unittest.TestCase):
     def test_versions_backup_and_tampering(self):
         root=packages.ROOT;data=packages.DATA
-        source=next((root/'metadataExample').glob('龍門*.xlsx'))
+        source=root/'metadataExample'/'龍門石窟北魏紀年題記_詮釋資料＿正式-re2.xlsx'
         with tempfile.TemporaryDirectory() as tmp:
             packages.ROOT=Path(tmp);packages.DATA=Path(tmp)/'workspace-data'
             try:
