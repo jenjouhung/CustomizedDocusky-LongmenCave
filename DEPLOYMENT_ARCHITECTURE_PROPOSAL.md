@@ -1,7 +1,7 @@
 # 單機與網路雙模式部署架構
 
 - 文件版本：1.0-confirmed
-- 文件狀態：已確認，已納入`DEVELOPMENT_SPEC.md`
+- 文件狀態：已確認，已納入`SPEC/DEVELOPMENT_SPEC.md`
 - 建立日期：2026-09-15
 
 ## 1. 已提出的新需求

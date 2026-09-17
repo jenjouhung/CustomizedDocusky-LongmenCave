@@ -19,7 +19,7 @@ macOS 安裝 Python 3.10 以上後，雙擊「啟動平台.command」，以 Chro
 
 ## 模組導航
 
-全文支援行內 Tag：左侧可切換 Metadata／Tag，Tag 依 term 的不重複文件數分類。搜尋與高亮只使用正文，完整資料內可展開「原始標記全文」。Tag 顯示名稱設定於 `tools/config.py` 的 `tagFacets`，對應 `Data_SPEC.md` 5.3；資料版本保存設定快照。解析與資料包介面見 `tools/MARKUP.md`。
+全文支援行內 Tag：左侧可切換 Metadata／Tag，Tag 依 term 的不重複文件數分類。搜尋與高亮只使用正文，完整資料內可展開「原始標記全文」。Tag 顯示名稱設定於 `tools/config.py` 的 `tagFacets`，對應 `SPEC/Data_SPEC.md` 5.3；資料版本保存設定快照。解析與資料包介面見 `tools/MARKUP.md`。
 
 | 修改內容 | 入口 | 測試 |
 |---|---|---|

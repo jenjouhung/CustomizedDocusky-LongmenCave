@@ -4,11 +4,18 @@ import {counts,label,sortIDs,sortFacets} from './core/facets.js';
 import {positiveTerms} from './core/query.js';
 import {fields,fieldLabel} from './core/facet-fields.js';
 import {renderText} from './core/text-view.js';
+import {Visualization} from './visualization.js';
 const $=s=>document.querySelector(s),el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n};
 let manifest,data,state,field,local=null,renderID=0;
 let drafts={},facetSort={};
 let facetType='Metadata', lastField={};
+const visualization=new Visualization({
+ getContext:()=>{const applied=state.conditions[field]||[];let items=counts(state.base(),state.conditions,data.facets,field);if(applied.length)items=items.filter(x=>applied.includes(x.value));const option=fields(data.config,facetType).find(x=>x.id===field);return {key:`${data.meta.id}:${field}`,type:facetType==='Tag'?'內文標籤':'後設資料',field:field,name:option?.label||field,items,sort:facetSort[field]||'count-desc'}},
+ onClose:()=>$('#visualize').focus()
+});
 const typeButtons=[...document.querySelectorAll('#facet-type [role="tab"]')];
+const fieldHeading=el('div',undefined,'facet-field-heading'),fieldHeadingLabel=document.querySelector('label[for="field"]'),visualizeButton=$('#visualize'),visualizeIcon=el('span',undefined,'visualize-icon');
+visualizeIcon.setAttribute('aria-hidden','true');visualizeIcon.append(el('i'),el('i'),el('i'));fieldHeadingLabel.before(fieldHeading);fieldHeading.append(fieldHeadingLabel,visualizeButton);visualizeButton.prepend(visualizeIcon);
 function showFacetType(){for(const control of typeButtons){const selected=control.dataset.type===facetType;control.setAttribute('aria-selected',String(selected));control.tabIndex=selected?0:-1}}
 function chooseFields(){const options=fields(data.config,facetType);field=options.some(f=>f.id===lastField[facetType])?lastField[facetType]:(options[0]?.id||'');$('#field').replaceChildren(...options.map(f=>{const o=el('option',f.label);o.value=f.id;return o}));$('#field').value=field;$('#field').disabled=!options.length;}
 function selectFacetType(next){if(next===facetType)return;lastField[facetType]=field;facetType=next;showFacetType();chooseFields();facets()}
@@ -35,6 +42,7 @@ function facets(){
   const lab=el('label');lab.append(check,document.createTextNode(' '+label(item.value)));
   row.append(lab,button(String(item.count),()=>{delete drafts[field];state.apply(field,[item.value]);return render()}));list.append(row);
  }
+ const hasItems=items.length>0;$('#visualize').disabled=!hasItems;$('#visualize').setAttribute('aria-label',hasItems?`視覺化：${fields(data.config,facetType).find(x=>x.id===field)?.label||field}`:'目前欄位沒有可視覺化項目');
  if(!list.childNodes.length)list.append(el('p',facetType==='Tag'&&!Object.keys(data.facets).some(f=>f.startsWith('tag:'))?'此版本無內文標籤後分類':'此條件下沒有可用分類值'));
  pending();
 }
@@ -53,6 +61,7 @@ async function versions(){const body=openDialog('資料版本');for(const v of m
 $('#close-dialog').onclick=()=>$('#dialog').close();$('#query-form').onsubmit=async e=>{e.preventDefault();try{state.query($('#query').value);await render()}catch(err){message(err.message)}};$('#clear-input').onclick=()=>{$('#query').value=''};$('#reset').onclick=reset;$('#field').onchange=()=>{field=$('#field').value;facets()};$('#apply').onclick=()=>{state.apply(field,[...document.querySelectorAll('#facet-values input:checked')].map(x=>x.value));render()};$('#clear-facets').onclick=()=>{state.conditions={};state.page=1;render()};$('#versions').onclick=()=>versions().catch(e=>message(e.message));
 async function init(){manifest=await json('data/manifest.json');await selectVersion(manifest.current)}
 $('#facet-sort').onchange=()=>{facetSort[field]=$('#facet-sort').value;facets()};
+$('#visualize').onclick=()=>visualization.open();
 $('#apply').onclick=()=>{state.apply(field,drafts[field]||state.conditions[field]||[]);delete drafts[field];render()};
 $('#cancel-facets').onclick=()=>{delete drafts[field];facets()};
 $('#clear-facets').onclick=()=>{drafts={};state.conditions={};state.page=1;render()};
