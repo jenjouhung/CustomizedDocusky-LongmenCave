@@ -17,8 +17,11 @@ export function formatPercent(value){if(value===null||!Number.isFinite(value))re
 function csvCell(value){let text=String(value??'');if(/^[=+\-@]/.test(text))text="'"+text;return /[",\r\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text}
 export function tableCSV(rows){return '\ufeff'+[['序號','類別名稱','文件數','比例','累積比例'],...rows.map(row=>[row.rank,row.label,row.count,formatPercent(row.proportion),formatPercent(row.cumulative)])].map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'}
 export class VisualizationState{
- constructor(){this.source=null;this.view='bar';this.search='';this.sort='count-desc';this.palette='pine';this.selected=new Set();this.zoom={bar:100,table:100}}
- setSource(source,preferredSort='count-desc'){if(this.source===source)return;this.source=source;this.view='bar';this.search='';this.sort=['count-desc','title-asc'].includes(preferredSort)?preferredSort:'count-desc';this.selected.clear();this.zoom={bar:100,table:100}}
+ constructor(){this.source=null;this.view='bar';this.search='';this.sort='count-desc';this.paletteByView={};this.selected=new Set();this.zoom={bar:100,bubble:100,table:100}}
+ get palette(){return this.paletteByView[this.view]||'pine'}
+ set palette(value){this.paletteByView[this.view]=value}
+ ensurePalette(view=this.view,random=Math.random){if(!this.paletteByView[view]){const used=new Set(Object.entries(this.paletteByView).filter(([key])=>key!==view).map(([,value])=>value)),all=['pine','ochre','indigo','moss'],choices=all.filter(value=>!used.has(value));this.paletteByView[view]=choices[Math.floor(random()*choices.length)%choices.length]}return this.paletteByView[view]}
+ setSource(source,preferredSort='count-desc'){if(this.source===source)return;this.source=source;this.view='bar';this.search='';this.sort=['count-desc','title-asc'].includes(preferredSort)?preferredSort:'count-desc';this.selected.clear();this.zoom={bar:100,bubble:100,table:100}}
  toggle(value){this.selected.has(value)?this.selected.delete(value):this.selected.add(value)}
  clearSelection(){this.selected.clear()}
 }

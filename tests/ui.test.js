@@ -23,19 +23,20 @@ test('分段控制支援選取狀態、方向鍵及中文條件來源',()=>{
  assert.match(app,/內文標籤':'後設資料/);
 });
 
-test('視覺化入口與共用控制存在，未完成圖形不可操作',()=>{
+test('視覺化入口與共用控制存在，泡泡圖可操作且未完成圓餅圖不可操作',()=>{
  assert.match(html,/id="visualize">視覺化<\/button>/);
  assert.match(html,/id="viz-search"/);
  assert.match(html,/id="viz-zoom"[^>]*min="10"[^>]*max="200"/);
  assert.match(html,/id="viz-zoom"[^>]*step="1"/);
- assert.match(html,/泡泡圖（後續開放）<\/button>/);
+ assert.match(html,/data-view="bubble"[^>]*>泡泡圖<\/button>/);
  assert.match(html,/圓餅圖（後續開放）<\/button>/);
- assert.equal((html.match(/後續開放）<\/button>/g)||[]).length,2);
+ assert.equal((html.match(/後續開放）<\/button>/g)||[]).length,1);
  assert.match(html,/data-view="table"[^>]*>資料表格<\/button>/);
  assert.match(html,/id="viz-export" hidden>↓ 匯出 CSV<\/button>/);
  assert.match(visualization,/prepareTableRows/);
  assert.match(visualization,/this\.state\.zoom\[this\.state\.view\]/);
  assert.match(visualizationCSS,/\.viz-data-table/);
+ assert.match(visualizationCSS,/\.viz-bubble-node/);
  assert.match(visualization,/bar\.title=`\$\{item\.label\}：\$\{item\.count\}筆`/);
  assert.match(visualization,/make\('span','分析標的','viz-source-label'\)/);
  assert.match(visualization,/this\.chart\.scrollTop=0/);
