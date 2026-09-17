@@ -1,6 +1,6 @@
 import {json,loadVersion,compareVersions} from './core/data.js';
 import {State} from './core/state.js';
-import {counts,label,sortIDs,sortFacets} from './core/facets.js';
+import {counts,filter,label,sortIDs,sortFacets} from './core/facets.js';
 import {positiveTerms} from './core/query.js';
 import {fields,fieldLabel} from './core/facet-fields.js';
 import {renderText} from './core/text-view.js';
@@ -10,7 +10,7 @@ let manifest,data,state,field,local=null,renderID=0;
 let drafts={},facetSort={};
 let facetType='Metadata', lastField={};
 const visualization=new Visualization({
- getContext:()=>{const applied=state.conditions[field]||[];let items=counts(state.base(),state.conditions,data.facets,field);if(applied.length)items=items.filter(x=>applied.includes(x.value));const option=fields(data.config,facetType).find(x=>x.id===field);return {key:`${data.meta.id}:${field}`,type:facetType==='Tag'?'內文標籤':'後設資料',field:field,name:option?.label||field,items,sort:facetSort[field]||'count-desc'}},
+ getContext:()=>{const applied=state.conditions[field]||[];let items=counts(state.base(),state.conditions,data.facets,field);if(applied.length)items=items.filter(x=>applied.includes(x.value));const option=fields(data.config,facetType).find(x=>x.id===field);return {key:`${data.meta.id}:${field}`,version:data.meta.id,type:facetType==='Tag'?'內文標籤':'後設資料',field:field,name:option?.label||field,items,documentTotal:filter(state.base(),state.conditions,data.facets,field).size,sort:facetSort[field]||'count-desc'}},
  onClose:()=>$('#visualize').focus()
 });
 const typeButtons=[...document.querySelectorAll('#facet-type [role="tab"]')];

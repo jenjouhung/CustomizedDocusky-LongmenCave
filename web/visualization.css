@@ -5,8 +5,42 @@
   --viz-matched: #5f8588;
   --viz-muted: #c8dada;
   --viz-row-height: 48px;
-  --viz-label-size: 19.2px
+  --viz-label-size: 19.2px;
+  --viz-table-row-height: 51px;
+  --viz-table-font-size: 15.8px
 }
+
+.viz-tabs {grid-template-columns:repeat(4,minmax(0,1fr));min-width:0}
+.viz-tabs button {min-width:0;padding:10px 6px;font-size:14px}
+.viz-chart:not(.viz-dense) .viz-label.is-wrapped {white-space:normal;overflow-wrap:anywhere;text-overflow:clip;line-height:1.15;font-size:var(--viz-wrapped-size);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.viz-chart:not(.viz-dense) .viz-bar-row:has(.is-wrapped) {min-height:32px}
+.viz-status-row {display:flex;align-items:center;justify-content:space-between;gap:16px}
+#viz-export {width:auto;padding:7px 12px;background:#fff;color:#175e64;border-color:#6d9ba0;font-size:14px;font-weight:700}
+.viz-chart.is-table {padding:0;border:1px solid #ccd7d5;border-radius:10px;background:#fff}
+.viz-data-table {width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:var(--viz-table-font-size)}
+.viz-data-table caption {position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.viz-data-table th {position:sticky;top:0;z-index:1;padding:10px 12px;background:#edf2f1;color:#27393c;text-align:left;white-space:nowrap;border-bottom:1px solid #c8d3d1}
+.viz-data-table th:nth-child(1),.viz-data-table td:nth-child(1){width:7%;color:#74817f}
+.viz-data-table th:nth-child(2),.viz-data-table td:nth-child(2){width:45%}
+.viz-data-table th:nth-child(3),.viz-data-table td:nth-child(3){width:11%;text-align:right;font-variant-numeric:tabular-nums;font-weight:750}
+.viz-data-table th:nth-child(4),.viz-data-table td:nth-child(4){width:22%}
+.viz-data-table th:nth-child(5),.viz-data-table td:nth-child(5){width:15%;text-align:right;font-variant-numeric:tabular-nums}
+.viz-data-table td {height:var(--viz-table-row-height);padding:5px 12px;border-bottom:1px solid #e2e7e6;transition:opacity .16s ease,background-color .16s ease}
+.viz-data-table tbody tr:last-child td{border-bottom:0}
+.viz-data-table tbody tr{cursor:pointer;outline:none}
+.viz-data-table tbody tr:hover td{background:#f5f8f7}
+.viz-data-table tbody tr:focus-visible td{box-shadow:inset 0 2px #276f74,inset 0 -2px #276f74}
+.viz-data-table tbody tr.is-top-three td{background:color-mix(in srgb,var(--viz-top) 8%,white)}
+.viz-data-table tbody tr.is-selected td{background:color-mix(in srgb,var(--viz-selected) 17%,white);color:var(--viz-selected)}
+.viz-data-table tbody tr.is-unmatched{opacity:.34}
+.viz-data-table tbody tr.is-unmatched.is-selected{opacity:.72}
+.viz-table-label{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viz-table-label mark{background:#ffe59b;color:inherit}
+.viz-ratio{display:grid;grid-template-columns:minmax(28px,1fr) auto;align-items:center;gap:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.viz-ratio-track{height:8px;overflow:hidden;border-radius:999px;background:#e4e9e8}
+.viz-ratio-fill{display:block;height:100%;border-radius:inherit;background:var(--viz-base)}
+.viz-data-table tr.is-top-three .viz-ratio-fill{background:var(--viz-top)}
+.viz-data-table tr.is-selected .viz-ratio-fill{background:var(--viz-selected)}
 
 .viz-navigation #viz-back {
   align-self: center;
@@ -82,6 +116,21 @@
   overflow: visible;
   opacity: 1;
   font-size: max(10px, calc(var(--viz-label-size) * .75));
+  line-height: 1
+}
+
+.viz-chart.viz-dense .viz-bar-row {
+  grid-template-columns: minmax(64px, 110px) minmax(60px, 1fr);
+  gap: 4px
+}
+
+.viz-chart.viz-dense .viz-label {
+  display: block;
+  overflow: hidden;
+  opacity: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: max(10px, calc(var(--viz-label-size) * .82));
   line-height: 1
 }
 
@@ -215,6 +264,13 @@
 }
 
 @media(max-width:520px) {
+  .viz-data-table th:nth-child(1),.viz-data-table td:nth-child(1){display:none}
+  .viz-data-table th:nth-child(2),.viz-data-table td:nth-child(2){width:42%}
+  .viz-data-table th:nth-child(3),.viz-data-table td:nth-child(3){width:16%}
+  .viz-data-table th:nth-child(4),.viz-data-table td:nth-child(4){width:25%}
+  .viz-data-table th:nth-child(5),.viz-data-table td:nth-child(5){width:17%}
+  .viz-data-table th,.viz-data-table td{padding-left:7px;padding-right:7px}
+  .viz-ratio{grid-template-columns:1fr;gap:2px}
   .viz-bar-row {
     grid-template-columns: minmax(70px, 30%) minmax(70px, 1fr);
     gap: 4px

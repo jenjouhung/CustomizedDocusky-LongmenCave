@@ -31,6 +31,11 @@ test('視覺化入口與共用控制存在，未完成圖形不可操作',()=>{
  assert.match(html,/泡泡圖（後續開放）<\/button>/);
  assert.match(html,/圓餅圖（後續開放）<\/button>/);
  assert.equal((html.match(/後續開放）<\/button>/g)||[]).length,2);
+ assert.match(html,/data-view="table"[^>]*>資料表格<\/button>/);
+ assert.match(html,/id="viz-export" hidden>↓ 匯出 CSV<\/button>/);
+ assert.match(visualization,/prepareTableRows/);
+ assert.match(visualization,/this\.state\.zoom\[this\.state\.view\]/);
+ assert.match(visualizationCSS,/\.viz-data-table/);
  assert.match(visualization,/bar\.title=`\$\{item\.label\}：\$\{item\.count\}筆`/);
  assert.match(visualization,/make\('span','分析標的','viz-source-label'\)/);
  assert.match(visualization,/this\.chart\.scrollTop=0/);

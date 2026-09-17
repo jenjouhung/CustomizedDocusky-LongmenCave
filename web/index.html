@@ -81,9 +81,10 @@
           <p id="viz-source"></p>
         </div>
         <div class="viz-tabs" role="tablist" aria-label="圖形類型"><button type="button" role="tab" aria-selected="true"
-            aria-controls="viz-chart">長條圖</button><button type="button" role="tab" aria-selected="false"
+            aria-controls="viz-chart" data-view="bar">長條圖</button><button type="button" role="tab" aria-selected="false"
             disabled>泡泡圖（後續開放）</button><button type="button" role="tab" aria-selected="false"
-            disabled>圓餅圖（後續開放）</button></div>
+            disabled>圓餅圖（後續開放）</button><button type="button" role="tab" aria-selected="false"
+            aria-controls="viz-chart" data-view="table" tabindex="-1">資料表格</button></div>
       </div>
       <div class="viz-controls"><label for="viz-search">搜尋項目<input id="viz-search" type="search" autocomplete="off"
             placeholder="輸入項目名稱"></label><button type="button" id="viz-clear-search">清除搜尋</button><label
@@ -98,7 +99,7 @@
             <option value="indigo">靛青灰</option>
             <option value="moss">苔綠</option>
           </select></label></div>
-      <div id="viz-status" aria-live="polite"></div>
+      <div class="viz-status-row"><div id="viz-status" aria-live="polite"></div><button type="button" id="viz-export" hidden>↓ 匯出 CSV</button></div>
       <div id="viz-selection" hidden aria-live="polite"></div>
       <div id="viz-focus-detail" aria-live="polite"></div>
       <div id="viz-chart" class="viz-chart" role="region" tabindex="0" aria-label="長條圖"></div>
