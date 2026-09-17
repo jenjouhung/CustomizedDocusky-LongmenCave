@@ -40,6 +40,9 @@ test('視覺化入口與共用控制存在，泡泡圖可操作且未完成圓�
  assert.match(visualization,/bar\.title=`\$\{item\.label\}：\$\{item\.count\}筆`/);
  assert.match(visualization,/make\('span','分析標的','viz-source-label'\)/);
  assert.match(visualization,/this\.chart\.scrollTop=0/);
+ assert.match(html,/id="viz-fullscreen"/);
+ assert.match(visualization,/wheelVisualizationZoom/);
+ assert.match(visualization,/toggleFullscreen/);
  assert.match(app,/facet-field-heading/);
  assert.match(app,/visualize-icon/);
  assert.match(visualizationCSS,/\.facet-field-heading #visualize/);

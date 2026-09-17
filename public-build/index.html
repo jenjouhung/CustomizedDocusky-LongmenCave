@@ -82,8 +82,8 @@
         </div>
         <div class="viz-tabs" role="tablist" aria-label="圖形類型"><button type="button" role="tab" aria-selected="true"
             aria-controls="viz-chart" data-view="bar">長條圖</button><button type="button" role="tab" aria-selected="false"
-            aria-controls="viz-chart" data-view="bubble" tabindex="-1">泡泡圖</button><button type="button" role="tab" aria-selected="false"
-            disabled>圓餅圖（後續開放）</button><button type="button" role="tab" aria-selected="false"
+            aria-controls="viz-chart" data-view="bubble" tabindex="-1">泡泡圖</button><button type="button" role="tab"
+            aria-selected="false" disabled>圓餅圖（後續開放）</button><button type="button" role="tab" aria-selected="false"
             aria-controls="viz-chart" data-view="table" tabindex="-1">資料表格</button></div>
       </div>
       <div class="viz-controls"><label for="viz-search">搜尋項目<input id="viz-search" type="search" autocomplete="off"
@@ -99,7 +99,11 @@
             <option value="indigo">靛青灰</option>
             <option value="moss">苔綠</option>
           </select></label></div>
-      <div class="viz-status-row"><div id="viz-status" aria-live="polite"></div><div id="viz-legend" hidden aria-label="泡泡圖文件數色階"></div><button type="button" id="viz-export" hidden>↓ 匯出 CSV</button></div>
+      <div class="viz-status-row">
+        <div id="viz-status" aria-live="polite"></div>
+        <div id="viz-legend" hidden aria-label="泡泡圖文件數色階"></div><button type="button" id="viz-export" hidden>↓ 匯出
+          CSV</button><button type="button" id="viz-fullscreen" aria-label="全螢幕顯示視覺化專區" title="全螢幕顯示">全螢幕</button>
+      </div>
       <div id="viz-selection" hidden aria-live="polite"></div>
       <div id="viz-focus-detail" aria-live="polite"></div>
       <div id="viz-chart" class="viz-chart" role="region" tabindex="0" aria-label="長條圖"></div>
